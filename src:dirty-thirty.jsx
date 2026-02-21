@@ -101,8 +101,8 @@ function LoginScreen({ onLogin }) {
           {/* Logo */}
           <div style={{ textAlign: "center", marginBottom: 40 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 16 }}>
-              <img src={LOGO} alt="BeatM Logo" style={{ width: 48, height: 48, objectFit: "contain", filter: "invert(1)" }} />
-              <span style={{ fontFamily: "'Inter'", fontSize: 13, color: C.muted, letterSpacing: 1 }}>by BeatM</span>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #1c1c30" }}><img src={LOGO} alt="BeatM Logo" style={{ width: 38, height: 38, objectFit: "contain" }} /></div>
+              <span style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 15, color: "#eef0f4", letterSpacing: 0.5 }}>by BeatM</span>
             </div>
             <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 84, lineHeight: 0.88, letterSpacing: -1 }}>
               <div style={{ color: C.text }}>DIRTY</div>
@@ -152,8 +152,8 @@ function Footer() {
       background: C.bg,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <img src={LOGO} alt="BeatM" style={{ width: 20, height: 20, objectFit: "contain", filter: "invert(1)", opacity: 0.5 }} />
-        <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, letterSpacing: 1 }}>by BeatM</span>
+        <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}><img src={LOGO} alt="BeatM" style={{ width: 17, height: 17, objectFit: "contain" }} /></div>
+        <span style={{ fontFamily: "'JetBrains Mono'", fontWeight: 600, fontSize: 10, color: "#eef0f4", letterSpacing: 1 }}>by BeatM</span>
       </div>
       <span style={{ color: C.border }}>·</span>
       <a href="https://beatm.org" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, letterSpacing: 1, textDecoration: "none", borderBottom: `1px solid ${C.muted}44` }}>
@@ -171,7 +171,7 @@ function Header({ tab, setTab, user, liveCount }) {
     <header style={{ position: "sticky", top: 0, zIndex: 100, background: `${C.bg}f2`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}` }}>
       <div style={{ maxWidth: 980, margin: "0 auto", padding: "0 20px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src={LOGO} alt="BeatM" style={{ width: 28, height: 28, objectFit: "contain", filter: "invert(1)" }} />
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}><img src={LOGO} alt="BeatM" style={{ width: 23, height: 23, objectFit: "contain" }} /></div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
             <span style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 22, color: C.accent }}>DIRTY</span>
             <span style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 22, background: `linear-gradient(90deg,${C.gold},${C.accent})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>THIRTY</span>
@@ -312,7 +312,14 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
           ))}
           {filtered.length === 0 && !loading && (
             <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: C.muted, fontFamily: "'JetBrains Mono'", fontSize: 11 }}>
-              {error ? "BACKEND NICHT ERREICHBAR" : "KEINE SPIELER VERFÜGBAR FÜR HEUTE"}
+              {error ? "BACKEND NICHT ERREICHBAR" : (
+                <div>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🏀</div>
+                  <div style={{ color: C.muted, marginBottom: 8 }}>KEINE SPIELE HEUTE</div>
+                  <div style={{ color: C.subtle, fontSize: 10, marginTop: 4 }}>MARCH MADNESS 2026 STARTET IM MÄRZ</div>
+                  <div style={{ color: C.subtle, fontSize: 10, marginTop: 4 }}>SPIELER WERDEN AUTOMATISCH ANGEZEIGT SOBALD DAS BRACKET FESTSTEHT</div>
+                </div>
+              )}
             </div>
           )}
         </div>
