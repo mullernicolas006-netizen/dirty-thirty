@@ -101,7 +101,7 @@ function LoginScreen({ onLogin }) {
           {/* Logo */}
           <div style={{ textAlign: "center", marginBottom: 40 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 16 }}>
-              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #1c1c30" }}><img src={LOGO} alt="BeatM Logo" style={{ width: 38, height: 38, objectFit: "contain" }} /></div>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#ff3d00", display: "flex", alignItems: "center", justifyContent: "center" }}><img src={LOGO} alt="BeatM Logo" style={{ width: 38, height: 38, objectFit: "contain" }} /></div>
               <span style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 15, color: "#eef0f4", letterSpacing: 0.5 }}>by BeatM</span>
             </div>
             <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 84, lineHeight: 0.88, letterSpacing: -1 }}>
@@ -152,7 +152,7 @@ function Footer() {
       background: C.bg,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}><img src={LOGO} alt="BeatM" style={{ width: 17, height: 17, objectFit: "contain" }} /></div>
+        <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#ff3d00", display: "flex", alignItems: "center", justifyContent: "center" }}><img src={LOGO} alt="BeatM" style={{ width: 16, height: 16, objectFit: "contain" }} /></div>
         <span style={{ fontFamily: "'JetBrains Mono'", fontWeight: 600, fontSize: 10, color: "#eef0f4", letterSpacing: 1 }}>by BeatM</span>
       </div>
       <span style={{ color: C.border }}>·</span>
@@ -171,7 +171,7 @@ function Header({ tab, setTab, user, liveCount }) {
     <header style={{ position: "sticky", top: 0, zIndex: 100, background: `${C.bg}f2`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}` }}>
       <div style={{ maxWidth: 980, margin: "0 auto", padding: "0 20px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}><img src={LOGO} alt="BeatM" style={{ width: 23, height: 23, objectFit: "contain" }} /></div>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#ff3d00", display: "flex", alignItems: "center", justifyContent: "center" }}><img src={LOGO} alt="BeatM" style={{ width: 22, height: 22, objectFit: "contain" }} /></div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
             <span style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 22, color: C.accent }}>DIRTY</span>
             <span style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 22, background: `linear-gradient(90deg,${C.gold},${C.accent})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>THIRTY</span>
