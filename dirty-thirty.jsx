@@ -73,13 +73,16 @@ function Badge({ label, color = C.muted, blink = false }) {
 function LoginScreen({ onLogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailConfirm, setEmailConfirm] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit() {
-    if (!name.trim()) return setErr("Name ist erforderlich");
-    if (!email.trim()) return setErr("E-Mail ist erforderlich");
-    if (!validateEmail(email.trim())) return setErr("Bitte gib eine gültige E-Mail-Adresse ein (z.B. name@domain.com)");
+    if (!name.trim()) return setErr("Name is required");
+    if (!email.trim()) return setErr("Email is required");
+    if (!validateEmail(email.trim())) return setErr("Please enter a valid email address (e.g. name@domain.com)");
+    if (!emailConfirm.trim()) return setErr("Please confirm your email address");
+    if (email.trim().toLowerCase() !== emailConfirm.trim().toLowerCase()) return setErr("Email addresses do not match");
     
     setLoading(true);
     const id = `user_${email.replace(/[^a-z0-9]/gi, "_").toLowerCase()}`;
@@ -131,10 +134,21 @@ function LoginScreen({ onLogin }) {
                 />
               </div>
             ))}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, letterSpacing: 2, display: "block", marginBottom: 7 }}>CONFIRM EMAIL</label>
+              <input type="email" placeholder="your@email.com"
+                value={emailConfirm} onChange={e => { setEmailConfirm(e.target.value); setErr(""); }}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                style={{ width: "100%", padding: "11px 14px", background: C.surface, border: `1px solid ${err.includes("match") ? C.red : C.border}`, borderRadius: 8, color: C.text, fontSize: 14 }}
+              />
+            </div>
             {err && <p style={{ color: C.red, fontFamily: "'JetBrains Mono'", fontSize: 11, marginBottom: 14, lineHeight: 1.5 }}>⚠ {err}</p>}
             <button onClick={submit} disabled={loading} style={{ width: "100%", padding: 13, background: C.accent, border: "none", borderRadius: 8, color: "#fff", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 22, letterSpacing: 3, cursor: "pointer", animation: "glow 2s infinite" }}>
               {loading ? "..." : "LET'S PLAY"}
             </button>
+            <p style={{ fontFamily: "'Inter'", fontSize: 11, color: C.muted, textAlign: "center", marginTop: 14, lineHeight: 1.7 }}>
+              By signing up, you agree to join the <span style={{ color: C.text, fontWeight: 500 }}>BeatM Waitlist</span> and be among the first to access new products, exclusive drops, and early-stage updates.
+            </p>
           </div>
         </div>
       </div>
@@ -522,17 +536,40 @@ export default function App() {
 
   async function loadLeaderboard() {
     const dateKey = todayStr();
-    const { keys } = await store.list("picks:");
     const entries = [];
-    for (const key of keys.filter(k => k.includes(`:${dateKey}:`))) {
+
+    // Load all picks for today
+    const { keys: pickKeys } = await store.list("picks:");
+    const pickMap = {};
+    for (const key of pickKeys.filter(k => k.includes(`:${dateKey}:`))) {
       try {
         const r = await store.get(key); if (!r) continue;
         const d = JSON.parse(r.value);
         const p1 = players.find(p => p.id === d.p1Id), p2 = players.find(p => p.id === d.p2Id);
         const p1pts = p1?.points ?? d.p1pts ?? null, p2pts = p2?.points ?? d.p2pts ?? null;
-        entries.push({ userId: d.userId, userName: d.userName, p1Name: d.p1Name, p2Name: d.p2Name, p1pts, p2pts, total: (p1pts !== null && p2pts !== null) ? p1pts + p2pts : null });
+        pickMap[d.userId] = { userId: d.userId, userName: d.userName, email: d.email, p1Name: d.p1Name, p2Name: d.p2Name, p1pts, p2pts, total: (p1pts !== null && p2pts !== null) ? p1pts + p2pts : null, hasPicks: !!(d.p1Id || d.p2Id) };
       } catch {}
     }
+
+    // Load ALL registered users and merge with picks
+    const { keys: userKeys } = await store.list("users:");
+    for (const key of userKeys) {
+      try {
+        const r = await store.get(key); if (!r) continue;
+        const u = JSON.parse(r.value);
+        if (pickMap[u.id]) {
+          entries.push(pickMap[u.id]);
+        } else {
+          entries.push({ userId: u.id, userName: u.name, email: u.email, p1Name: null, p2Name: null, p1pts: null, p2pts: null, total: null, hasPicks: false });
+        }
+      } catch {}
+    }
+
+    // Add any pick entries not already covered
+    for (const entry of Object.values(pickMap)) {
+      if (!entries.find(e => e.userId === entry.userId)) entries.push(entry);
+    }
+
     setLeaderboard(entries);
   }
 
