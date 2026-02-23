@@ -123,7 +123,7 @@ function LoginScreen({ onLogin }) {
           </div>
 
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 28 }}>
-            {[["name", "text", "Dein Name"], ["email", "email", "deine@email.com"]].map(([field, type, ph]) => (
+            {[["name", "text", "Your Name"], ["email", "email", "your@email.com"]].map(([field, type, ph]) => (
               <div key={field} style={{ marginBottom: field === "name" ? 16 : 22 }}>
                 <label style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, letterSpacing: 2, display: "block", marginBottom: 7 }}>{field.toUpperCase()}</label>
                 <input type={type} placeholder={ph}
@@ -261,7 +261,7 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
       <div className="fu" style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 38, letterSpacing: 1 }}>TODAY'S <span style={{ color: C.accent }}>PICKS</span></h1>
         <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>
-          {new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }).toUpperCase()}
+          {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" }).toUpperCase()}
           {nextGameDate && <span style={{ color: C.orange, marginLeft: 8 }}>· NÄCHSTE SPIELE: {nextGameDate}</span>}
         </p>
       </div>
@@ -277,7 +277,7 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
                   {pick?.headshot ? <img src={pick.headshot} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} /> : <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: pick ? C.accent : C.muted }}>P{i + 1}</span>}
                 </div>
                 <div>
-                  <div style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 13, color: pick ? C.text : C.muted }}>{pick ? pick.name : "— Nicht gewählt"}</div>
+                  <div style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 13, color: pick ? C.text : C.muted }}>{pick ? pick.name : "— Not selected"}</div>
                   {pick && (
                     <div style={{ display: "flex", gap: 7, alignItems: "center", marginTop: 3 }}>
                       <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted }}>{pick.team}</span>
@@ -307,7 +307,7 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
 
       {/* Filters */}
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Spieler suchen..." style={{ flex: 1, minWidth: 160, padding: "7px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13 }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search players..." style={{ flex: 1, minWidth: 160, padding: "7px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13 }} />
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
           {teams.map(t => (
             <button key={t} onClick={() => setTeamFilter(t)} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${teamFilter === t ? C.accent : C.border}`, background: teamFilter === t ? C.accentDim : "transparent", color: teamFilter === t ? C.accent : C.muted, fontFamily: "'JetBrains Mono'", fontSize: 9, letterSpacing: 1, cursor: "pointer" }}>{t}</button>
@@ -329,9 +329,9 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
               {error ? "BACKEND NICHT ERREICHBAR" : (
                 <div>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>🏀</div>
-                  <div style={{ color: C.muted, marginBottom: 8 }}>KEINE SPIELE HEUTE</div>
-                  <div style={{ color: C.subtle, fontSize: 10, marginTop: 4 }}>MARCH MADNESS 2026 STARTET IM MÄRZ</div>
-                  <div style={{ color: C.subtle, fontSize: 10, marginTop: 4 }}>SPIELER WERDEN AUTOMATISCH ANGEZEIGT SOBALD DAS BRACKET FESTSTEHT</div>
+                  <div style={{ color: C.muted, marginBottom: 8 }}>NO GAMES TODAY</div>
+                  <div style={{ color: C.subtle, fontSize: 10, marginTop: 4 }}>MARCH MADNESS 2026 STARTS IN MARCH</div>
+                  <div style={{ color: C.subtle, fontSize: 10, marginTop: 4 }}>PLAYERS WILL APPEAR AUTOMATICALLY ONCE THE BRACKET IS SET</div>
                 </div>
               )}
             </div>
@@ -349,7 +349,7 @@ function LeaderboardScreen({ entries, userId }) {
     <div style={{ maxWidth: 980, margin: "0 auto", padding: "24px 20px" }}>
       <div className="fu" style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 38, letterSpacing: 1 }}>LEADER<span style={{ color: C.accent }}>BOARD</span></h1>
-        <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>{ranked.length} SPIELER HEUTE</p>
+        <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>{ranked.length} PLAYERS TODAY</p>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {ranked.map((entry, idx) => {
@@ -376,7 +376,7 @@ function LeaderboardScreen({ entries, userId }) {
             </div>
           );
         })}
-        {ranked.length === 0 && <div style={{ textAlign: "center", padding: 80, color: C.muted, fontFamily: "'JetBrains Mono'", fontSize: 11 }}>NOCH KEINE PICKS — SEI DER ERSTE!</div>}
+        {ranked.length === 0 && <div style={{ textAlign: "center", padding: 80, color: C.muted, fontFamily: "'JetBrains Mono'", fontSize: 11 }}>NO PICKS YET — BE THE FIRST!</div>}
       </div>
     </div>
   );
@@ -401,7 +401,7 @@ function ResultsScreen({ entries }) {
         </div>
       ) : (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 40, textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.muted }}>GAMES NOCH NICHT BEENDET — ERGEBNISSE FOLGEN</div>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.muted }}>GAMES NOT FINISHED YET — RESULTS COMING SOON</div>
         </div>
       )}
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -477,7 +477,7 @@ export default function App() {
           const nextRes = await apiFetch(`/today-players?date=${dateStr}`);
           if (nextRes.success && nextRes.players.length > 0) {
             // Found upcoming games — show players but mark them all as not locked
-            const dateLabel = nextDate.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+            const dateLabel = nextDate.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
             setNextGameDate(dateLabel.toUpperCase());
             res = nextRes;
             break;
