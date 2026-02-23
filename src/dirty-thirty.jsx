@@ -12,10 +12,68 @@ const C = {
   text: "#eef0f4", muted: "#5a6070", subtle: "#2a2a42",
 };
 
-const store = {
-  async get(key) { try { return await window.storage.get(key, true); } catch { return null; } },
-  async set(key, value) { try { return await window.storage.set(key, JSON.stringify(value), true); } catch {} },
-  async list(prefix) { try { return await window.storage.list(prefix, true); } catch { return { keys: [] }; } },
+const SUPABASE_URL = "https://fcxeoqoabcmwzopvwfhx.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjeGVvcW9hYmNtd3pvcHZ3Zmh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MjAzMTMsImV4cCI6MjA4NzM5NjMxM30.rXtqwXzdVnPjsZSNYxxlrF5t-Ey2FTF6buCEyWa_gyM";
+
+async function sbFetch(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": options.prefer || "return=representation",
+      ...options.headers,
+    },
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+const db = {
+  async getUser(id) {
+    try {
+      const rows = await sbFetch(`users?id=eq.${encodeURIComponent(id)}&select=*`);
+      return rows?.[0] || null;
+    } catch { return null; }
+  },
+  async saveUser(user) {
+    try {
+      await sbFetch("users", {
+        method: "POST",
+        prefer: "resolution=merge-duplicates,return=representation",
+        headers: { "Prefer": "resolution=merge-duplicates,return=representation" },
+        body: JSON.stringify({ id: user.id, name: user.name, email: user.email, joined: user.joined }),
+      });
+    } catch(e) { console.error("saveUser error", e); }
+  },
+  async getAllUsers() {
+    try {
+      return await sbFetch("users?select=*&order=joined.asc") || [];
+    } catch { return []; }
+  },
+  async savePick(pick) {
+    try {
+      await sbFetch("picks", {
+        method: "POST",
+        prefer: "resolution=merge-duplicates,return=representation",
+        headers: { "Prefer": "resolution=merge-duplicates,return=representation" },
+        body: JSON.stringify(pick),
+      });
+    } catch(e) { console.error("savePick error", e); }
+  },
+  async getPick(userId, date) {
+    try {
+      const rows = await sbFetch(`picks?user_id=eq.${encodeURIComponent(userId)}&date=eq.${date}&select=*`);
+      return rows?.[0] || null;
+    } catch { return null; }
+  },
+  async getAllPicksForDate(date) {
+    try {
+      return await sbFetch(`picks?date=eq.${date}&select=*`) || [];
+    } catch { return []; }
+  },
 };
 
 async function apiFetch(path) {
@@ -89,8 +147,7 @@ function LoginScreen({ onLogin }) {
     const user = { id, name: name.trim(), email: email.trim().toLowerCase(), joined: Date.now() };
     
     // Save to shared storage so admin can see all users
-    await store.set(`users:${id}`, user);
-    await store.set(`user_emails:${email.trim().toLowerCase()}`, { userId: id, name: name.trim(), email: email.trim().toLowerCase(), joined: Date.now() });
+    await db.saveUser(user);
     
     localStorage.setItem("d30_user", JSON.stringify(user));
     onLogin(user);
@@ -557,9 +614,9 @@ export default function App() {
       setLiveCount(res.games.filter(g => g.status === "STATUS_IN_PROGRESS").length);
       setPlayers(res.players);
 
-      const saved = await store.get(`picks:${user.id}:${todayStr()}`);
+      const saved = await db.getPick(user.id, todayStr());
       if (saved) {
-        const d = JSON.parse(saved.value);
+        const d = { p1Id: saved.p1_id, p1Name: saved.p1_name, p2Id: saved.p2_id, p2Name: saved.p2_name };
         setPicks([
           d.p1Id ? res.players.find(p => p.id === d.p1Id) || null : null,
           d.p2Id ? res.players.find(p => p.id === d.p2Id) || null : null,
@@ -598,47 +655,38 @@ export default function App() {
 
   async function savePicks() {
     if (!user) return;
-    await store.set(`picks:${user.id}:${todayStr()}`, { userId: user.id, userName: user.name, p1Id: picks[0]?.id || null, p1Name: picks[0]?.name || null, p1pts: picks[0]?.points ?? null, p2Id: picks[1]?.id || null, p2Name: picks[1]?.name || null, p2pts: picks[1]?.points ?? null, updatedAt: Date.now() });
+    await db.savePick({ id: `${user.id}:${todayStr()}`, user_id: user.id, user_name: user.name, date: todayStr(), p1_id: picks[0]?.id || null, p1_name: picks[0]?.name || null, p1_pts: picks[0]?.points ?? null, p2_id: picks[1]?.id || null, p2_name: picks[1]?.name || null, p2_pts: picks[1]?.points ?? null, updated_at: Date.now() });
   }
 
   async function loadLeaderboard() {
     const dateKey = todayStr();
     const entries = [];
 
-    // Load today's picks into a map
-    const { keys: pickKeys } = await store.list("picks:");
+    // Load today's picks from Supabase
+    const todayPicks = await db.getAllPicksForDate(dateKey);
     const pickMap = {};
-    for (const key of pickKeys.filter(k => k.includes(`:${dateKey}:`))) {
-      try {
-        const r = await store.get(key); if (!r) continue;
-        const d = JSON.parse(r.value);
-        const p1 = players.find(p => p.id === d.p1Id), p2 = players.find(p => p.id === d.p2Id);
-        const p1pts = p1?.points ?? d.p1pts ?? null, p2pts = p2?.points ?? d.p2pts ?? null;
-        pickMap[d.userId] = {
-          userId: d.userId, userName: d.userName,
-          p1Name: d.p1Name, p2Name: d.p2Name,
-          p1pts, p2pts,
-          total: (p1pts !== null && p2pts !== null) ? p1pts + p2pts : null,
-        };
-      } catch {}
+    for (const pick of todayPicks) {
+      const p1 = players.find(p => p.id === pick.p1_id), p2 = players.find(p => p.id === pick.p2_id);
+      const p1pts = p1?.points ?? pick.p1_pts ?? null, p2pts = p2?.points ?? pick.p2_pts ?? null;
+      pickMap[pick.user_id] = {
+        userId: pick.user_id, userName: pick.user_name,
+        p1Name: pick.p1_name, p2Name: pick.p2_name,
+        p1pts, p2pts,
+        total: (p1pts !== null && p2pts !== null) ? p1pts + p2pts : null,
+      };
     }
 
     // Always load ALL registered users — leaderboard is never empty
-    const { keys: userKeys } = await store.list("users:");
-    for (const key of userKeys) {
-      try {
-        const r = await store.get(key); if (!r) continue;
-        const u = JSON.parse(r.value);
-        if (pickMap[u.id]) {
-          entries.push(pickMap[u.id]);
-        } else {
-          // User registered but no picks today — show with blank score
-          entries.push({ userId: u.id, userName: u.name, p1Name: null, p2Name: null, p1pts: null, p2pts: null, total: null });
-        }
-      } catch {}
+    const allUsers = await db.getAllUsers();
+    for (const u of allUsers) {
+      if (pickMap[u.id]) {
+        entries.push(pickMap[u.id]);
+      } else {
+        entries.push({ userId: u.id, userName: u.name, p1Name: null, p2Name: null, p1pts: null, p2pts: null, total: null });
+      }
     }
 
-    // Also add users who have picks but aren't in users: storage yet
+    // Add pick entries not yet in users table
     for (const entry of Object.values(pickMap)) {
       if (!entries.find(e => e.userId === entry.userId)) entries.push(entry);
     }
