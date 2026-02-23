@@ -261,8 +261,8 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
       <div className="fu" style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 38, letterSpacing: 1 }}>TODAY'S <span style={{ color: C.accent }}>PICKS</span></h1>
         <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>
-          {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" }).toUpperCase()}
-          {nextGameDate && <span style={{ color: C.orange, marginLeft: 8 }}>· NÄCHSTE SPIELE: {nextGameDate}</span>}
+          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }).toUpperCase()}
+          {nextGameDate && <span style={{ color: C.orange, marginLeft: 8 }}>· NEXT GAMES: {nextGameDate}</span>}
         </p>
       </div>
 
@@ -294,14 +294,14 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
           {isLive && <Badge label="LIVE" color={C.green} blink />}
           <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 60, lineHeight: 1, color: scoreColor, marginTop: 2 }}>{total !== null ? total : "—"}</div>
           <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: scoreColor, letterSpacing: 1, marginTop: 1 }}>
-            {total !== null ? isBust ? "💥 BUST!" : total === 30 ? "🎯 PERFECT!" : `${30 - total} VOM ZIEL` : "/ 30"}
+            {total !== null ? isBust ? "💥 BUST!" : total === 30 ? "🎯 PERFECT!" : `${30 - total} FROM 30` : "/ 30"}
           </div>
         </div>
       </div>
 
       {error && (
         <div style={{ background: `${C.red}11`, border: `1px solid ${C.red}44`, borderRadius: 10, padding: "11px 16px", marginBottom: 18, fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.red }}>
-          ⚠ Backend nicht erreichbar — bitte versuche es in einem Moment erneut.
+          ⚠ Backend unavailable — please try again in a moment.
         </div>
       )}
 
@@ -326,7 +326,7 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
           ))}
           {filtered.length === 0 && !loading && (
             <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: C.muted, fontFamily: "'JetBrains Mono'", fontSize: 11 }}>
-              {error ? "BACKEND NICHT ERREICHBAR" : (
+              {error ? "BACKEND UNAVAILABLE" : (
                 <div>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>🏀</div>
                   <div style={{ color: C.muted, marginBottom: 8 }}>NO GAMES TODAY</div>
@@ -344,40 +344,100 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
 
 // ── LEADERBOARD ───────────────────────────────────────────────────
 function LeaderboardScreen({ entries, userId }) {
-  const ranked = rankEntries(entries);
+  const valid = entries.filter(e => e.total !== null && e.total <= 30).sort((a, b) => scoreDelta(a.total) - scoreDelta(b.total));
+  const noPicks = entries.filter(e => e.total === null);
+  const busts = entries.filter(e => e.total !== null && e.total > 30).sort((a, b) => b.total - a.total);
+  const leader = valid[0] || null;
+  const medals = ["🥇","🥈","🥉"];
+
+  function EntryRow({ entry, rank, showRank = true }) {
+    const isMe = entry.userId === userId;
+    const isBust = entry.total !== null && entry.total > 30;
+    const isPerfect = entry.total === 30;
+    const delta = scoreDelta(entry.total);
+    return (
+      <div style={{ background: isMe ? C.accentDim : C.card, border: `1px solid ${isMe ? C.accent : C.border}`, borderRadius: 10, padding: "13px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ width: 34, textAlign: "center", flexShrink: 0 }}>
+          {showRank && (medals[rank] && !isBust ? <span style={{ fontSize: 19 }}>{medals[rank]}</span> : <span style={{ fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 17, color: C.muted }}>#{rank + 1}</span>)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 14, color: isMe ? C.accent : C.text }}>
+            {entry.userName}{isMe && <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, marginLeft: 7 }}>(YOU)</span>}
+          </div>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, marginTop: 3 }}>
+            {entry.p1Name ? `${entry.p1Name} (${entry.p1pts ?? "?"}) + ${entry.p2Name ?? "—"} (${entry.p2pts ?? "?"})` : <span style={{ fontStyle: "italic" }}>No picks yet</span>}
+          </div>
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
+          <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 28, lineHeight: 1, color: isBust ? C.red : isPerfect ? C.gold : entry.total !== null ? C.green : C.muted }}>
+            {entry.total ?? "—"}
+          </div>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, marginTop: 2, letterSpacing: 1 }}>
+            {isPerfect ? <span style={{ color: C.gold }}>🎯 PERFECT</span> : delta !== null ? <span style={{ color: C.green }}>{delta} FROM 30</span> : <span style={{ color: C.muted }}>NO PICKS</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: "24px 20px" }}>
       <div className="fu" style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 38, letterSpacing: 1 }}>LEADER<span style={{ color: C.accent }}>BOARD</span></h1>
-        <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>{ranked.length} PLAYERS TODAY</p>
+        <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>{entries.length} PLAYERS REGISTERED TODAY</p>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {ranked.map((entry, idx) => {
-          const isMe = entry.userId === userId;
-          const isBust = entry.total !== null && entry.total > 30;
-          const isPerfect = entry.total === 30;
-          const delta = scoreDelta(entry.total);
-          const medals = ["🥇","🥈","🥉"];
-          return (
-            <div key={entry.userId} className="fu" style={{ animationDelay: `${idx * 0.025}s`, background: isMe ? C.accentDim : C.card, border: `1px solid ${isMe ? C.accent : C.border}`, borderRadius: 10, padding: "13px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 34, textAlign: "center" }}>
-                {medals[idx] && !isBust ? <span style={{ fontSize: 19 }}>{medals[idx]}</span> : <span style={{ fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 17, color: C.muted }}>#{idx+1}</span>}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 14, color: isMe ? C.accent : C.text }}>{entry.userName}{isMe && <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, marginLeft: 7 }}>(DU)</span>}</div>
-                <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, marginTop: 3 }}>{entry.p1Name ? `${entry.p1Name} (${entry.p1pts ?? "?"}) + ${entry.p2Name ?? "—"} (${entry.p2pts ?? "?"})` : "Noch keine Picks"}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 28, lineHeight: 1, color: isBust ? C.red : isPerfect ? C.gold : entry.total !== null ? C.green : C.muted }}>{entry.total ?? "—"}</div>
-                <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, marginTop: 2, letterSpacing: 1 }}>
-                  {isBust ? <span style={{ color: C.red }}>💥 BUST</span> : isPerfect ? <span style={{ color: C.gold }}>🎯 PERFECT</span> : delta !== null ? <span style={{ color: C.muted }}>{delta} VON 30</span> : <span style={{ color: C.muted }}>AUSSTEHEND</span>}
+
+      {/* Leader highlight */}
+      {leader && (
+        <div className="fu" style={{ background: `linear-gradient(135deg, ${C.goldDim}, ${C.accentDim})`, border: `1px solid ${C.gold}44`, borderRadius: 14, padding: "18px 22px", marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }}>
+          <span style={{ fontSize: 36 }}>🏆</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.gold, letterSpacing: 2, marginBottom: 4 }}>CURRENTLY LEADING</div>
+            <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 28, color: C.text }}>{leader.userName}</div>
+            <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, marginTop: 2 }}>
+              {leader.p1Name ? `${leader.p1Name} (${leader.p1pts ?? "?"}) + ${leader.p2Name} (${leader.p2pts ?? "?"})` : ""}
+            </div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 52, lineHeight: 1, color: C.gold }}>{leader.total}</div>
+            <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.gold, letterSpacing: 1 }}>{scoreDelta(leader.total)} FROM 30</div>
+          </div>
+        </div>
+      )}
+
+      {/* Valid entries */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+        {valid.map((entry, i) => <EntryRow key={entry.userId} entry={entry} rank={i} />)}
+        {noPicks.map((entry, i) => <EntryRow key={entry.userId} entry={entry} rank={valid.length + i} />)}
+      </div>
+
+      {/* Bust Zone */}
+      {busts.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ flex: 1, height: 1, background: C.red + "44" }} />
+            <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.red, letterSpacing: 2 }}>💥 BUST ZONE</span>
+            <div style={{ flex: 1, height: 1, background: C.red + "44" }} />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {busts.map((entry, i) => (
+              <div key={entry.userId} style={{ background: `${C.red}0d`, border: `1px solid ${C.red}33`, borderRadius: 10, padding: "13px 18px", display: "flex", alignItems: "center", gap: 14, opacity: 0.8 }}>
+                <div style={{ width: 34, textAlign: "center" }}><span style={{ fontSize: 16 }}>💥</span></div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 14, color: C.red }}>{entry.userName}{entry.userId === userId && <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, marginLeft: 7 }}>(YOU)</span>}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, marginTop: 3 }}>{entry.p1Name} ({entry.p1pts}) + {entry.p2Name} ({entry.p2pts})</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 28, color: C.red }}>{entry.total}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.red, letterSpacing: 1 }}>+{entry.total - 30} OVER</div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-        {ranked.length === 0 && <div style={{ textAlign: "center", padding: 80, color: C.muted, fontFamily: "'JetBrains Mono'", fontSize: 11 }}>NO PICKS YET — BE THE FIRST!</div>}
-      </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {entries.length === 0 && <div style={{ textAlign: "center", padding: 80, color: C.muted, fontFamily: "'JetBrains Mono'", fontSize: 11 }}>NO PLAYERS YET — BE THE FIRST!</div>}
     </div>
   );
 }
@@ -397,7 +457,7 @@ function ResultsScreen({ entries }) {
           <div style={{ fontSize: 52, marginBottom: 6 }}>🏆</div>
           <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 48, color: C.gold, letterSpacing: 3 }}>{winner.userName}</div>
           <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.muted, marginTop: 8 }}>{winner.p1Name} ({winner.p1pts}) + {winner.p2Name} ({winner.p2pts}) = <span style={{ color: C.gold }}>{winner.total} Punkte</span></div>
-          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.gold, marginTop: 5, letterSpacing: 1 }}>{winner.total === 30 ? "🎯 PERFECT DIRTY THIRTY!" : `NUR ${30 - winner.total} PUNKTE VOM DIRTY THIRTY`}</div>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.gold, marginTop: 5, letterSpacing: 1 }}>{winner.total === 30 ? "🎯 PERFECT DIRTY THIRTY!" : `JUST ${30 - winner.total} POINTS FROM DIRTY THIRTY`}</div>
         </div>
       ) : (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 40, textAlign: "center", marginBottom: 24 }}>
@@ -477,7 +537,7 @@ export default function App() {
           const nextRes = await apiFetch(`/today-players?date=${dateStr}`);
           if (nextRes.success && nextRes.players.length > 0) {
             // Found upcoming games — show players but mark them all as not locked
-            const dateLabel = nextDate.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
+            const dateLabel = nextDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
             setNextGameDate(dateLabel.toUpperCase());
             res = nextRes;
             break;
