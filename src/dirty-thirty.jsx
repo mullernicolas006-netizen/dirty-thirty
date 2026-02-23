@@ -116,9 +116,9 @@ function LoginScreen({ onLogin }) {
 
           <div style={{ background: C.goldDim, border: `1px solid ${C.gold}33`, borderRadius: 10, padding: "13px 18px", marginBottom: 20 }}>
             <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.gold, lineHeight: 1.9, letterSpacing: 0.3 }}>
-              🏀 Pick 2 Spieler · Kombinierte Punkte = 30<br/>
-              🎯 Wer am nächsten zu 30 kommt, gewinnt<br/>
-              💥 Über 30 = Bust → du verlierst
+              🏀 Pick 2 Players · Combined Points = 30<br/>
+              🎯 Closest to 30 wins<br/>
+              💥 Over 30 = Bust → you lose
             </p>
           </div>
 
