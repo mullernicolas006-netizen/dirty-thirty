@@ -73,13 +73,16 @@ function Badge({ label, color = C.muted, blink = false }) {
 function LoginScreen({ onLogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailConfirm, setEmailConfirm] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit() {
     if (!name.trim()) return setErr("Name is required");
     if (!email.trim()) return setErr("Email is required");
-    if (!validateEmail(email.trim())) return setErr("Bitte gib eine valid email address ein (z.B. name@domain.com)");
+    if (!validateEmail(email.trim())) return setErr("Please enter a valid email address (e.g. name@domain.com)");
+    if (!emailConfirm.trim()) return setErr("Please confirm your email address");
+    if (email.trim().toLowerCase() !== emailConfirm.trim().toLowerCase()) return setErr("Email addresses do not match");
     
     setLoading(true);
     const id = `user_${email.replace(/[^a-z0-9]/gi, "_").toLowerCase()}`;
@@ -113,14 +116,14 @@ function LoginScreen({ onLogin }) {
 
           <div style={{ background: C.goldDim, border: `1px solid ${C.gold}33`, borderRadius: 10, padding: "13px 18px", marginBottom: 20 }}>
             <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.gold, lineHeight: 1.9, letterSpacing: 0.3 }}>
-              🏀 Pick 2 Players · Combined Points = 30<br/>
-              🎯 Closest to 30 wins<br/>
-              💥 Over 30 = Bust → you lose
+              🏀 Pick 2 Spieler · Kombinierte Punkte = 30<br/>
+              🎯 Wer am nächsten zu 30 kommt, gewinnt<br/>
+              💥 Über 30 = Bust → du verlierst
             </p>
           </div>
 
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 28 }}>
-            {[["name", "text", "Your Name"], ["email", "email", "deine@email.com"]].map(([field, type, ph]) => (
+            {[["name", "text", "Dein Name"], ["email", "email", "deine@email.com"]].map(([field, type, ph]) => (
               <div key={field} style={{ marginBottom: field === "name" ? 16 : 22 }}>
                 <label style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, letterSpacing: 2, display: "block", marginBottom: 7 }}>{field.toUpperCase()}</label>
                 <input type={type} placeholder={ph}
@@ -131,10 +134,21 @@ function LoginScreen({ onLogin }) {
                 />
               </div>
             ))}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted, letterSpacing: 2, display: "block", marginBottom: 7 }}>CONFIRM EMAIL</label>
+              <input type="email" placeholder="your@email.com"
+                value={emailConfirm} onChange={e => { setEmailConfirm(e.target.value); setErr(""); }}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                style={{ width: "100%", padding: "11px 14px", background: C.surface, border: `1px solid ${err.includes("match") ? C.red : C.border}`, borderRadius: 8, color: C.text, fontSize: 14 }}
+              />
+            </div>
             {err && <p style={{ color: C.red, fontFamily: "'JetBrains Mono'", fontSize: 11, marginBottom: 14, lineHeight: 1.5 }}>⚠ {err}</p>}
             <button onClick={submit} disabled={loading} style={{ width: "100%", padding: 13, background: C.accent, border: "none", borderRadius: 8, color: "#fff", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 22, letterSpacing: 3, cursor: "pointer", animation: "glow 2s infinite" }}>
               {loading ? "..." : "LET'S PLAY"}
             </button>
+            <p style={{ fontFamily: "'Inter'", fontSize: 11, color: C.muted, textAlign: "center", marginTop: 14, lineHeight: 1.7 }}>
+              By signing up, you agree to join the <span style={{ color: C.text, fontWeight: 500 }}>BeatM Waitlist</span> and be among the first to access new products, exclusive drops, and early-stage updates.
+            </p>
           </div>
         </div>
       </div>
@@ -247,7 +261,7 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
       <div className="fu" style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 38, letterSpacing: 1 }}>TODAY'S <span style={{ color: C.accent }}>PICKS</span></h1>
         <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>
-          {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" }).toUpperCase()}
+          {new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }).toUpperCase()}
           {nextGameDate && <span style={{ color: C.orange, marginLeft: 8 }}>· NÄCHSTE SPIELE: {nextGameDate}</span>}
         </p>
       </div>
@@ -263,7 +277,7 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
                   {pick?.headshot ? <img src={pick.headshot} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} /> : <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: pick ? C.accent : C.muted }}>P{i + 1}</span>}
                 </div>
                 <div>
-                  <div style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 13, color: pick ? C.text : C.muted }}>{pick ? pick.name : "— Not selected"}</div>
+                  <div style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 13, color: pick ? C.text : C.muted }}>{pick ? pick.name : "— Nicht gewählt"}</div>
                   {pick && (
                     <div style={{ display: "flex", gap: 7, alignItems: "center", marginTop: 3 }}>
                       <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, color: C.muted }}>{pick.team}</span>
@@ -280,7 +294,7 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
           {isLive && <Badge label="LIVE" color={C.green} blink />}
           <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 60, lineHeight: 1, color: scoreColor, marginTop: 2 }}>{total !== null ? total : "—"}</div>
           <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: scoreColor, letterSpacing: 1, marginTop: 1 }}>
-            {total !== null ? isBust ? "💥 BUST!" : total === 30 ? "🎯 PERFECT!" : `${30 - total} FROM 30` : "/ 30"}
+            {total !== null ? isBust ? "💥 BUST!" : total === 30 ? "🎯 PERFECT!" : `${30 - total} VOM ZIEL` : "/ 30"}
           </div>
         </div>
       </div>
@@ -293,7 +307,7 @@ function PickScreen({ user, players, picks, setPicks, loading, error, nextGameDa
 
       {/* Filters */}
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search players..." style={{ flex: 1, minWidth: 160, padding: "7px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13 }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Spieler suchen..." style={{ flex: 1, minWidth: 160, padding: "7px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13 }} />
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
           {teams.map(t => (
             <button key={t} onClick={() => setTeamFilter(t)} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${teamFilter === t ? C.accent : C.border}`, background: teamFilter === t ? C.accentDim : "transparent", color: teamFilter === t ? C.accent : C.muted, fontFamily: "'JetBrains Mono'", fontSize: 9, letterSpacing: 1, cursor: "pointer" }}>{t}</button>
@@ -335,7 +349,7 @@ function LeaderboardScreen({ entries, userId }) {
     <div style={{ maxWidth: 980, margin: "0 auto", padding: "24px 20px" }}>
       <div className="fu" style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 38, letterSpacing: 1 }}>LEADER<span style={{ color: C.accent }}>BOARD</span></h1>
-        <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>{ranked.length} PLAYERS TODAY</p>
+        <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.muted, letterSpacing: 2, marginTop: 3 }}>{ranked.length} SPIELER HEUTE</p>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {ranked.map((entry, idx) => {
@@ -356,7 +370,7 @@ function LeaderboardScreen({ entries, userId }) {
               <div style={{ textAlign: "right" }}>
                 <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 28, lineHeight: 1, color: isBust ? C.red : isPerfect ? C.gold : entry.total !== null ? C.green : C.muted }}>{entry.total ?? "—"}</div>
                 <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 9, marginTop: 2, letterSpacing: 1 }}>
-                  {isBust ? <span style={{ color: C.red }}>💥 BUST</span> : isPerfect ? <span style={{ color: C.gold }}>🎯 PERFECT</span> : delta !== null ? <span style={{ color: C.muted }}>{delta} VON 30</span> : <span style={{ color: C.muted }}>PENDING</span>}
+                  {isBust ? <span style={{ color: C.red }}>💥 BUST</span> : isPerfect ? <span style={{ color: C.gold }}>🎯 PERFECT</span> : delta !== null ? <span style={{ color: C.muted }}>{delta} VON 30</span> : <span style={{ color: C.muted }}>AUSSTEHEND</span>}
                 </div>
               </div>
             </div>
@@ -463,7 +477,7 @@ export default function App() {
           const nextRes = await apiFetch(`/today-players?date=${dateStr}`);
           if (nextRes.success && nextRes.players.length > 0) {
             // Found upcoming games — show players but mark them all as not locked
-            const dateLabel = nextDate.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
+            const dateLabel = nextDate.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
             setNextGameDate(dateLabel.toUpperCase());
             res = nextRes;
             break;
@@ -522,17 +536,40 @@ export default function App() {
 
   async function loadLeaderboard() {
     const dateKey = todayStr();
-    const { keys } = await store.list("picks:");
     const entries = [];
-    for (const key of keys.filter(k => k.includes(`:${dateKey}:`))) {
+
+    // Load all picks for today
+    const { keys: pickKeys } = await store.list("picks:");
+    const pickMap = {};
+    for (const key of pickKeys.filter(k => k.includes(`:${dateKey}:`))) {
       try {
         const r = await store.get(key); if (!r) continue;
         const d = JSON.parse(r.value);
         const p1 = players.find(p => p.id === d.p1Id), p2 = players.find(p => p.id === d.p2Id);
         const p1pts = p1?.points ?? d.p1pts ?? null, p2pts = p2?.points ?? d.p2pts ?? null;
-        entries.push({ userId: d.userId, userName: d.userName, p1Name: d.p1Name, p2Name: d.p2Name, p1pts, p2pts, total: (p1pts !== null && p2pts !== null) ? p1pts + p2pts : null });
+        pickMap[d.userId] = { userId: d.userId, userName: d.userName, email: d.email, p1Name: d.p1Name, p2Name: d.p2Name, p1pts, p2pts, total: (p1pts !== null && p2pts !== null) ? p1pts + p2pts : null, hasPicks: !!(d.p1Id || d.p2Id) };
       } catch {}
     }
+
+    // Load ALL registered users and merge with picks
+    const { keys: userKeys } = await store.list("users:");
+    for (const key of userKeys) {
+      try {
+        const r = await store.get(key); if (!r) continue;
+        const u = JSON.parse(r.value);
+        if (pickMap[u.id]) {
+          entries.push(pickMap[u.id]);
+        } else {
+          entries.push({ userId: u.id, userName: u.name, email: u.email, p1Name: null, p2Name: null, p1pts: null, p2pts: null, total: null, hasPicks: false });
+        }
+      } catch {}
+    }
+
+    // Add any pick entries not already covered
+    for (const entry of Object.values(pickMap)) {
+      if (!entries.find(e => e.userId === entry.userId)) entries.push(entry);
+    }
+
     setLeaderboard(entries);
   }
 
