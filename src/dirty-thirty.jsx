@@ -456,7 +456,7 @@ function ResultsScreen({ entries }) {
         <div className="fu" style={{ background: C.goldDim, border: `1px solid ${C.gold}44`, borderRadius: 14, padding: 30, textAlign: "center", marginBottom: 24 }}>
           <div style={{ fontSize: 52, marginBottom: 6 }}>🏆</div>
           <div style={{ fontFamily: "'Barlow Condensed'", fontWeight: 900, fontSize: 48, color: C.gold, letterSpacing: 3 }}>{winner.userName}</div>
-          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.muted, marginTop: 8 }}>{winner.p1Name} ({winner.p1pts}) + {winner.p2Name} ({winner.p2pts}) = <span style={{ color: C.gold }}>{winner.total} Punkte</span></div>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.muted, marginTop: 8 }}>{winner.p1Name} ({winner.p1pts}) + {winner.p2Name} ({winner.p2pts}) = <span style={{ color: C.gold }}>{winner.total} Points</span></div>
           <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: C.gold, marginTop: 5, letterSpacing: 1 }}>{winner.total === 30 ? "🎯 PERFECT DIRTY THIRTY!" : `JUST ${30 - winner.total} POINTS FROM DIRTY THIRTY`}</div>
         </div>
       ) : (
@@ -508,6 +508,13 @@ export default function App() {
     if (!user) return;
     loadTodayPlayers();
     loadLeaderboard();
+  }, [user]);
+
+  // Reload leaderboard every 60s independently of game data
+  useEffect(() => {
+    if (!user) return;
+    const iv = setInterval(loadLeaderboard, REFRESH_INTERVAL);
+    return () => clearInterval(iv);
   }, [user]);
 
   useEffect(() => {
@@ -598,7 +605,7 @@ export default function App() {
     const dateKey = todayStr();
     const entries = [];
 
-    // Load all picks for today
+    // Load today's picks into a map
     const { keys: pickKeys } = await store.list("picks:");
     const pickMap = {};
     for (const key of pickKeys.filter(k => k.includes(`:${dateKey}:`))) {
@@ -607,11 +614,16 @@ export default function App() {
         const d = JSON.parse(r.value);
         const p1 = players.find(p => p.id === d.p1Id), p2 = players.find(p => p.id === d.p2Id);
         const p1pts = p1?.points ?? d.p1pts ?? null, p2pts = p2?.points ?? d.p2pts ?? null;
-        pickMap[d.userId] = { userId: d.userId, userName: d.userName, email: d.email, p1Name: d.p1Name, p2Name: d.p2Name, p1pts, p2pts, total: (p1pts !== null && p2pts !== null) ? p1pts + p2pts : null, hasPicks: !!(d.p1Id || d.p2Id) };
+        pickMap[d.userId] = {
+          userId: d.userId, userName: d.userName,
+          p1Name: d.p1Name, p2Name: d.p2Name,
+          p1pts, p2pts,
+          total: (p1pts !== null && p2pts !== null) ? p1pts + p2pts : null,
+        };
       } catch {}
     }
 
-    // Load ALL registered users and merge with picks
+    // Always load ALL registered users — leaderboard is never empty
     const { keys: userKeys } = await store.list("users:");
     for (const key of userKeys) {
       try {
@@ -620,12 +632,13 @@ export default function App() {
         if (pickMap[u.id]) {
           entries.push(pickMap[u.id]);
         } else {
-          entries.push({ userId: u.id, userName: u.name, email: u.email, p1Name: null, p2Name: null, p1pts: null, p2pts: null, total: null, hasPicks: false });
+          // User registered but no picks today — show with blank score
+          entries.push({ userId: u.id, userName: u.name, p1Name: null, p2Name: null, p1pts: null, p2pts: null, total: null });
         }
       } catch {}
     }
 
-    // Add any pick entries not already covered
+    // Also add users who have picks but aren't in users: storage yet
     for (const entry of Object.values(pickMap)) {
       if (!entries.find(e => e.userId === entry.userId)) entries.push(entry);
     }
