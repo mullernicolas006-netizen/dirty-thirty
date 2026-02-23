@@ -77,9 +77,9 @@ function LoginScreen({ onLogin }) {
   const [loading, setLoading] = useState(false);
 
   async function submit() {
-    if (!name.trim()) return setErr("Name ist erforderlich");
-    if (!email.trim()) return setErr("E-Mail ist erforderlich");
-    if (!validateEmail(email.trim())) return setErr("Bitte gib eine gültige E-Mail-Adresse ein (z.B. name@domain.com)");
+    if (!name.trim()) return setErr("Name is required");
+    if (!email.trim()) return setErr("Email is required");
+    if (!validateEmail(email.trim())) return setErr("Bitte gib eine valid email address ein (z.B. name@domain.com)");
     
     setLoading(true);
     const id = `user_${email.replace(/[^a-z0-9]/gi, "_").toLowerCase()}`;
@@ -113,9 +113,9 @@ function LoginScreen({ onLogin }) {
 
           <div style={{ background: C.goldDim, border: `1px solid ${C.gold}33`, borderRadius: 10, padding: "13px 18px", marginBottom: 20 }}>
             <p style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: C.gold, lineHeight: 1.9, letterSpacing: 0.3 }}>
-              🏀 Pick 2 Spieler · Kombinierte Punkte = 30<br/>
-              🎯 Wer am nächsten zu 30 kommt, gewinnt<br/>
-              💥 Über 30 = Bust → du verlierst
+              🏀 Pick 2 Players · Kombinierte Punkte = 30<br/>
+              🎯 Closest to 30 wins<br/>
+              💥 Over 30 = Bust → you lose
             </p>
           </div>
 
